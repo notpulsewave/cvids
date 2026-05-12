@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>cvids</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<style>
+  :root {
+    --bg: #0d0f12;
+    --card: #16181d;
+    --accent: #4f8cff;
+    --text: #f2f2f5;
+    --muted: #8b8f97;
+    --radius: 14px;
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Inter, system-ui, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
+
+  header {
+    width: 100%;
+    max-width: 1200px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .logo {
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+  }
+
+  .tagline {
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  .app {
+    width: 100%;
+    max-width: 1200px;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+  }
+
+  @media (max-width: 900px) {
+    .app {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .player-card {
+    background: var(--card);
+    padding: 16px;
+    border-radius: var(--radius);
+    box-shadow: 0 8px 20px #0005;
+  }
+
+  video {
+    width: 100%;
+    border-radius: var(--radius);
+    background: #000;
+  }
+
+  .player-meta {
+    margin-top: 12px;
+  }
+
+  .player-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  .player-file {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .list-card {
+    background: var(--card);
+    padding: 16px;
+    border-radius: var(--radius);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 8px 20px #0005;
+  }
+
+  .search input {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: var(--radius);
+    border: none;
+    background: #0f1114;
+    color: var(--text);
+    font-size: 0.9rem;
+  }
+
+  .video-list {
+    overflow-y: auto;
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .video-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border-radius: var(--radius);
+    background: #111317;
+    cursor: pointer;
+    transition: 0.15s ease;
+  }
+
+  .video-item:hover {
+    background: #1a1d22;
+  }
+
+  .video-item.active {
+    background: #1f2937;
+    border-left: 3px solid var(--accent);
+  }
+
+  .thumb {
+    width: 70px;
+    height: 42px;
+    background: #000;
+    border-radius: 8px;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .thumb-icon {
+    width: 0;
+    height: 0;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-left: 12px solid white;
+  }
+
+  .video-title {
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  .video-file {
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">cvids</div>
+  <div class="tagline">Local video shelf</div>
+</header>
+
+<div class="app">
+
+  <!-- Player -->
+  <div class="player-card">
+    <video id="player" controls></video>
+
+    <div class="player-meta">
+      <div id="playerTitle" class="player-title">Select a video</div>
+      <div id="playerFile" class="player-file">—</div>
+    </div>
+  </div>
+
+  <!-- List -->
+  <div class="list-card">
+    <div class="search">
+      <input id="search" type="text" placeholder="Search videos..." />
+    </div>
+
+    <div id="videoList" class="video-list"></div>
+  </div>
+
+</div>
+
+<script>
+  // Add your videos here
+  const videos = [
+    { title: "Example 1", file: "video1.mp4" },
+    { title: "Example 2", file: "video2.mp4" },
+    // { title: "My Clip", file: "clip.mp4" },
+  ];
+
+  const player = document.getElementById("player");
+  const playerTitle = document.getElementById("playerTitle");
+  const playerFile = document.getElementById("playerFile");
+  const list = document.getElementById("videoList");
+  const search = document.getElementById("search");
+
+  let filtered = [...videos];
+  let current = -1;
+
+  function render() {
+    list.innerHTML = "";
+    filtered.forEach((v, i) => {
+      const item = document.createElement("div");
+      item.className = "video-item";
+      if (videos.indexOf(v) === current) item.classList.add("active");
+
+      item.onclick = () => loadVideo(videos.indexOf(v));
+
+      const thumb = document.createElement("div");
+      thumb.className = "thumb";
+      thumb.innerHTML = '<div class="thumb-icon"></div>';
+
+      const text = document.createElement("div");
+      text.innerHTML = `
+        <div class="video-title">${v.title}</div>
+        <div class="video-file">${v.file}</div>
+      `;
+
+      item.appendChild(thumb);
+      item.appendChild(text);
+      list.appendChild(item);
+    });
+  }
+
+  function loadVideo(i) {
+    current = i;
+    const v = videos[i];
+    player.src = v.file;
+    playerTitle.textContent = v.title;
+    playerFile.textContent = v.file;
+    render();
+  }
+
+  search.oninput = () => {
+    const q = search.value.toLowerCase();
+    filtered = videos.filter(v =>
+      (v.title + v.file).toLowerCase().includes(q)
+    );
+    render();
+  };
+
+  render();
+</script>
+
+</body>
+</html>
